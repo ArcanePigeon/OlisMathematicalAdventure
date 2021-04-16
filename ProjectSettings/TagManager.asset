@@ -5,7 +5,11 @@ TagManager:
   serializedVersion: 2
   tags:
   - Obstacle
-  - Crate
+  - BackWall
+  - HeartCrate
+  - BoosterCrate
+  - Money
+  - Duck
   layers:
   - Default
   - TransparentFX
