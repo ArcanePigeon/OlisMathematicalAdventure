@@ -41,6 +41,7 @@ public class DuckLevelScript : MonoBehaviour {
     public TMP_Text questionTMP;
     public TMP_Text questionShadowTMP;
     public TMP_Text scoreTMP;
+    public TMP_Text scoreShadowTMP;
     public int health = 6;
     public int score = 0;
     public float moveSpeed = 5f;
@@ -385,7 +386,7 @@ public class DuckLevelScript : MonoBehaviour {
 
         if (other.CompareTag("Money")) {
             other.gameObject.SetActive(false);
-            score += 1000;
+            scoreIncrease(100);
         }
 
         // if Oli collides with a jet pack crate, hide crate
@@ -403,6 +404,15 @@ public class DuckLevelScript : MonoBehaviour {
         }
 
         if (other.CompareTag("ProblemAnswer")) {
+            // if hit correct answer
+            if (other.gameObject.GetComponent<ProblemAnswerScript>().isCorrectAnswer) {
+                // increase score from correct answer
+                    if (rocketBooster.activeInHierarchy){
+                        scoreIncrease(500);
+                    } else {
+                        scoreIncrease(300);
+                    }
+            }
             foreach (GameObject answer in problemAnswers) {
                 if (answer.GetComponent<ProblemAnswerScript>().isCorrectAnswer) {
                     // selected correct answer
@@ -474,5 +484,11 @@ public class DuckLevelScript : MonoBehaviour {
                 problemAnswers[i].GetComponent<ProblemAnswerScript>().isCorrectAnswer = true;
             }
         }
+    }
+
+    private void scoreIncrease(int points){
+        score += points;
+        scoreTMP.text = "Score: " + score;
+        scoreShadowTMP.text = "Score: " + score;
     }
 }

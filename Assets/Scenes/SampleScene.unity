@@ -2075,7 +2075,7 @@ GameObject:
   - component: {fileID: 664203487}
   - component: {fileID: 664203486}
   m_Layer: 5
-  m_Name: ScoreShadow
+  m_Name: Score Shadow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5725,7 +5725,8 @@ MonoBehaviour:
   numBread: 5
   questionTMP: {fileID: 532390921}
   questionShadowTMP: {fileID: 1429945055}
-  scoreTMP: {fileID: 0}
+  scoreTMP: {fileID: 970002293}
+  scoreShadowTMP: {fileID: 664203486}
   health: 6
   score: 0
   moveSpeed: 5
