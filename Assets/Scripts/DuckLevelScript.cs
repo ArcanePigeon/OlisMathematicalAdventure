@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Audio;
 using UnityEngine;
+using System;
 using TMPro;
 
 public class DuckLevelScript : MonoBehaviour {
@@ -42,15 +44,24 @@ public class DuckLevelScript : MonoBehaviour {
     public TMP_Text questionShadowTMP;
     public TMP_Text scoreTMP;
     public TMP_Text scoreShadowTMP;
+    public TMP_Text highscoreTMP;
+    public TMP_Text highscoreShadowTMP;
     public int health = 6;
     public int score = 0;
+    public int highScore = 0;
     public float moveSpeed = 5f;
     public float speed = 5f;
     public float timeBtwSpawn = 0f;
-    public float startTimeBtwSpawn = 1f;
-    private string correctHighlight = "<mark=#6AFF00 padding=\"15, 15, 5, -5\">";
-    private string incorrectHighlight = "<mark=#E6482E padding=\"15, 15, 5, -5\">";
-    private string highlightEndTag = "</mark>";
+    public float startTimeBtwSpawn = 3f;
+    public float timeBtwSpawnCoins = 0f;
+    public float startTimeBtwSpawnCoins = 2f;
+    public float timeBtwSpawnQuestion = 0f;
+    public float startTimeBtwSpawnQuestion = 6f;
+    public float questionWaitTime = 5f;
+    public string questionString = "";
+    public GameObject loseScreen;
+    public bool paused = false;
+    public Sound[] sounds;
 
     private Dictionary<string, string[]> multiplicationTable = new Dictionary<string,string[]>{
         {"1x0", new string[]{"0", "10", "1", "2"}},
@@ -213,11 +224,12 @@ public class DuckLevelScript : MonoBehaviour {
 
     // Start is called before the first frame update
     void Start() {
+        foreach(Sound s in sounds){
+            s.source = gameObject.AddComponent<AudioSource>();
+            s.source.clip = s.clip;
+        }
         rocketBooster.SetActive(false);
-
-        ResetProblemAnswerStates();
-        SetNewQuestion();
-
+        GetNewQuestion();
         for(int i = 0; i < 6; i++) {
             hearts[i].SetActive(false);
         }
@@ -248,24 +260,127 @@ public class DuckLevelScript : MonoBehaviour {
             breadPool.Add(obj);
         }
     }
-
+    public void Play(string name){
+        Sound s = Array.Find(sounds, sound => sound.clipName == name);
+        if(s == null){
+            return;
+        }
+        s.source.Play();
+    }
+    public IEnumerator SpawnObstacles(int i){
+        if(i == 0 || i == 1){
+            SpawnLane(Items.LilyPad, 0);
+            SpawnLane(Items.LilyPad, 1);
+            SpawnLane(Items.LilyPad, 2);
+            yield return new WaitForSeconds(1.5f);
+            SpawnLane(Items.LilyPad, 3);
+            SpawnLane(Items.LilyPad, 2);
+            SpawnLane(Items.LilyPad, 1);
+        }else if(i == 2 || i == 3){
+            SpawnLane(Items.Rock, 0);
+            SpawnLane(Items.Rock, 3);
+            yield return new WaitForSeconds(0.75f);
+            SpawnLane(Items.Rock, 1);
+            SpawnLane(Items.Rock, 2);
+        }else if(i == 4 || i == 5){
+            SpawnLane(Items.Rock, 0);
+            yield return new WaitForSeconds(0.25f);
+            SpawnLane(Items.Rock, 1);
+            yield return new WaitForSeconds(0.25f);
+            SpawnLane(Items.Rock, 2);
+            yield return new WaitForSeconds(0.25f);
+        }else if( i == 6 || i == 7){
+            SpawnLane(Items.Rock, 3);
+            yield return new WaitForSeconds(0.25f);
+            SpawnLane(Items.Rock, 2);
+            yield return new WaitForSeconds(0.25f);
+            SpawnLane(Items.Rock, 1);
+            yield return new WaitForSeconds(0.25f);
+        }else if(i == 8 || i == 9){
+            SpawnLane(Items.LilyPad, 0);
+            SpawnLane(Items.LilyPad, 1);
+            yield return new WaitForSeconds(0.75f);
+            SpawnLane(Items.LilyPad, 2);
+            SpawnLane(Items.LilyPad, 3);
+            yield return new WaitForSeconds(0.75f);
+            SpawnLane(Items.LilyPad, 0);
+            SpawnLane(Items.LilyPad, 1);
+        }else if(i == 10 || i == 11){
+            SpawnLane(Items.LilyPad, 0);
+            SpawnLane(Items.LilyPad, 1);
+            SpawnLane(Items.LilyPad, 2);
+        }else if(i == 12){
+            SpawnLane(Items.HealthCrate,UnityEngine.Random.Range(0,4));
+        }else if(i == 13){
+            SpawnLane(Items.BoosterCrate,UnityEngine.Random.Range(0,4));
+        }else if(i == 14){
+            SpawnLane(Items.Bread, 0);
+            SpawnLane(Items.Bread, 1);
+            SpawnLane(Items.Bread, 2);
+            SpawnLane(Items.Bread, 3);
+            yield return new WaitForSeconds(0.25f);
+            SpawnLane(Items.Bread, 0);
+            SpawnLane(Items.Bread, 1);
+            SpawnLane(Items.Bread, 2);
+            SpawnLane(Items.Bread, 3);
+            yield return new WaitForSeconds(0.25f);
+            SpawnLane(Items.Bread, 0);
+            SpawnLane(Items.Bread, 1);
+            SpawnLane(Items.Bread, 2);
+            SpawnLane(Items.Bread, 3);
+            yield return new WaitForSeconds(0.25f);
+            SpawnLane(Items.Bread, 0);
+            SpawnLane(Items.Bread, 1);
+            SpawnLane(Items.Bread, 2);
+            SpawnLane(Items.Bread, 3);
+        }else if(i == 16){
+            SpawnLane(Items.Bread, 3);
+            yield return new WaitForSeconds(0.25f);
+            SpawnLane(Items.Bread, 2);
+            yield return new WaitForSeconds(0.25f);
+            SpawnLane(Items.Bread, 1);
+            yield return new WaitForSeconds(0.25f);
+        }else if(i == 16){
+            int x = UnityEngine.Random.Range(0,4);
+            SpawnLane(Items.Bread, x);
+            yield return new WaitForSeconds(0.25f);
+            SpawnLane(Items.Bread, x);
+            yield return new WaitForSeconds(0.25f);
+            SpawnLane(Items.Bread, x);
+            yield return new WaitForSeconds(0.25f);
+            SpawnLane(Items.Bread, x);
+        }
+    }
     // Update is called once per frame
     void Update() {
-        if(timeBtwSpawn <= 0){
-            Items i = Random.Range(0,101) < 95 ? (Items)(Random.Range(0,3)) : (Items)Random.Range(3,5);
-            SpawnLane(i,Random.Range(0,4));
-            timeBtwSpawn = startTimeBtwSpawn;
-        }else{
-            timeBtwSpawn -= Time.deltaTime;
-        }
-        if(Input.GetKeyDown("w")){
-            if(currentLane >= 1){
-                currentLane--;
+        if(!paused){
+            if(timeBtwSpawn <= 0){
+                if(timeBtwSpawnQuestion <= 0f){
+                    timeBtwSpawn += 2f;
+                }else{
+                    int i = (UnityEngine.Random.Range(0,17));
+                    StartCoroutine(SpawnObstacles(i));
+                    timeBtwSpawn = startTimeBtwSpawn;
+                }
+            }else{
+                timeBtwSpawn -= Time.deltaTime;
             }
-        }
-        if(Input.GetKeyDown("s")){
-            if(currentLane <= 2){
-                currentLane++;
+            if(timeBtwSpawnQuestion <= 0){
+                ResetProblemAnswerStates();
+                SetNewQuestion();
+                timeBtwSpawnQuestion = startTimeBtwSpawnQuestion;
+            }else{
+                timeBtwSpawnQuestion -= Time.deltaTime;
+            }
+            if(Input.GetKeyDown("w")){
+                if(currentLane >= 1){
+                    currentLane--;
+                }
+            }
+            if(Input.GetKeyDown("s")){
+                if(currentLane <= 2){
+                    currentLane++;
+                }
             }
         }
         if(Input.GetKeyDown("1")){
@@ -370,6 +485,8 @@ public class DuckLevelScript : MonoBehaviour {
                 health = 0;
             }
             SetHeartView(health);
+            Play("RockHit");
+            Play("DuckHit");
         }
 
         // if Oli collides with a health boost crate, hide crate
@@ -382,11 +499,13 @@ public class DuckLevelScript : MonoBehaviour {
                 health = 6;
             }
             SetHeartView(health);
+            Play("HeartBoxHit");
         }
 
         if (other.CompareTag("Money")) {
             other.gameObject.SetActive(false);
             scoreIncrease(100);
+            Play("BreadHit");
         }
 
         // if Oli collides with a jet pack crate, hide crate
@@ -397,6 +516,8 @@ public class DuckLevelScript : MonoBehaviour {
             rocketBooster.SetActive(true);
             moveSpeed += 5f;
             speed += 5f;
+            Play("RocketBoxHit");
+            Play("RocketActivate");
             yield return new WaitForSeconds(5f);
             rocketBooster.SetActive(false);
             moveSpeed -= 5f;
@@ -412,26 +533,30 @@ public class DuckLevelScript : MonoBehaviour {
                     } else {
                         scoreIncrease(300);
                     }
+                    Play("RightAnswer");
+            }else{
+                health -= 1;
+                if(health < 0){
+                    health = 0;
+                }
+                SetHeartView(health);
+                Play("WrongAnswer");
             }
             foreach (GameObject answer in problemAnswers) {
                 if (answer.GetComponent<ProblemAnswerScript>().isCorrectAnswer) {
                     // selected correct answer
                     // remove the question from the dictionary because the user knows it, so it shouldn't repeat
-                    multiplicationTable.Remove(questionTMP.text);
+                    // multiplicationTable.Remove(questionTMP.text);
 
                     // highlight the correct answer
-                    var currentText = answer.transform.GetChild(0).GetComponent<TMP_Text>().text;
-                    answer.transform.GetChild(0).GetComponent<TMP_Text>().text = correctHighlight + currentText + highlightEndTag;
-                } else if (other.gameObject == answer) {
+                    answer.transform.GetChild(1).GetComponent<TMP_Text>().color = new Color32(50,168,82,255);
+                } else{
                     // selected incorrect answer
                     // highlight incorrect answer with red
-                    var currentText = answer.transform.GetChild(0).GetComponent<TMP_Text>().text;
-                    answer.transform.GetChild(0).GetComponent<TMP_Text>().text = incorrectHighlight + currentText + highlightEndTag;
+                    answer.transform.GetChild(1).GetComponent<TMP_Text>().color = new Color32(168,50,50,255);
                 }
             }
-            yield return new WaitForSeconds(3f);
-            ResetProblemAnswerStates();
-            SetNewQuestion();
+            GetNewQuestion();
         }
     }
 
@@ -445,8 +570,44 @@ public class DuckLevelScript : MonoBehaviour {
             hearts[health - 1].SetActive(true);
         } else {
             hearts[0].SetActive(false);
-            Debug.Log("out of health, level ends");
+            loseScreen.SetActive(true);
+            paused = true;
+            speed = 0f;
+            Play("LostGame");
         }
+    }
+    public void PlayAgain(){
+        loseScreen.SetActive(false);
+        foreach(var x in rockPool){
+            x.SetActive(false);
+        }
+        foreach(var x in breadPool){
+            x.SetActive(false);
+        }
+        foreach(var x in lilyPadPool){
+            x.SetActive(false);
+        }
+        foreach(var x in healthCratePool){
+            x.SetActive(false);
+        }
+        foreach(var x in boosterCratePool){
+            x.SetActive(false);
+        }
+        foreach(var x in problemAnswers){
+            x.transform.position = new Vector3(-999,-999,-999);
+        }
+        if(score > highScore){
+            highScore = score;
+        }
+        score = 0;
+        scoreTMP.text = "Score: " + score;
+        scoreShadowTMP.text = "Score: " + score;
+        highscoreTMP.text = "Score: " + highScore;
+        highscoreShadowTMP.text = "Score: " + highScore;
+        speed = 5f;
+        paused = false;
+        health = 6;
+        SetHeartView(health);
     }
 
     private void ResetProblemAnswerStates() {
@@ -455,23 +616,24 @@ public class DuckLevelScript : MonoBehaviour {
             problemAnswers[i].transform.position = lane[i].transform.position;
         }
     }
+    public void GetNewQuestion(){
+        List<string> keyList = new List<string>(this.multiplicationTable.Keys);
+        questionString = keyList[(int)UnityEngine.Random.Range(0, keyList.Count - 1)];
+        questionTMP.text = questionString;
+        questionShadowTMP.text = questionString;
+    }
 
     private void SetNewQuestion() {
-        if (multiplicationTable.Count == 0) {
+        /*if (multiplicationTable.Count == 0) {
             Debug.Log("stop here, game over. all questions have been answered correctly. congrats u win");
-        }
-        List<string> keyList = new List<string>(this.multiplicationTable.Keys);
-        var randomKey = keyList[(int)Random.Range(0, keyList.Count - 1)];
-        questionTMP.text = randomKey;
-        questionShadowTMP.text = randomKey;
+        }*/
 
-        var possibleAnswers = multiplicationTable[randomKey];
+        var possibleAnswers = multiplicationTable[questionString];
         var correctAnswer = possibleAnswers[0];
-        
+
         // shuffle answers list
-        for (int i = 0; i < possibleAnswers.Length - 1; i++) 
-        {
-            int rnd = Random.Range(i, possibleAnswers.Length);
+        for (int i = 0; i < possibleAnswers.Length - 1; i++) {
+            int rnd = UnityEngine.Random.Range(i, possibleAnswers.Length);
             var temp = possibleAnswers[rnd];
             possibleAnswers[rnd] = possibleAnswers[i];
             possibleAnswers[i] = temp;
@@ -480,6 +642,7 @@ public class DuckLevelScript : MonoBehaviour {
         for (int i = 0; i < 4; i++) {
             problemAnswers[i].transform.GetChild(0).GetComponent<TMP_Text>().text = possibleAnswers[i];
             problemAnswers[i].transform.GetChild(1).GetComponent<TMP_Text>().text = possibleAnswers[i];
+            problemAnswers[i].transform.GetChild(1).GetComponent<TMP_Text>().color = new Color32(255,255,255,255);
             if (possibleAnswers[i] == correctAnswer) {
                 problemAnswers[i].GetComponent<ProblemAnswerScript>().isCorrectAnswer = true;
             }
